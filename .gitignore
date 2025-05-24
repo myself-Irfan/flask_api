@@ -1,0 +1,15 @@
+# venv
+.venv/
+
+# ide files
+.idea/
+
+# log
+*.log
+
+# db
+instance/
+*.db
+
+# env
+*.env

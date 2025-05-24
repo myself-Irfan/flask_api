@@ -1,0 +1,9 @@
+.venv/
+.idea/
+*.log
+instance/
+*.db
+*.env
+__pycache__/
+.git
+.gitignore
