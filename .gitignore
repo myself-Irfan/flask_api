@@ -3,6 +3,7 @@
 
 # ide files
 .idea/
+__pycache__/
 
 # log
 *.log
