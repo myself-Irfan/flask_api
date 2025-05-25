@@ -37,6 +37,12 @@ A Flask-based RESTful API and web application for managing blog posts with user 
 ### 1. Clone the Repository
 
 ```bash
-
-git clone <repository-url>
+git clone https://github.com/myself-Irfan/flask_api.git
 cd 57-Blog_Api
+```
+### 2. Docker 
+```zsh
+docker build -t <app-name>
+docker compose up -d --build
+docker compose logs -f
+```
