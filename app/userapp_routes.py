@@ -8,6 +8,7 @@ from .schemas import RegisterSchema, LoginSchema
 from .security import hash_pwd, verify_pwd
 
 userapp = Blueprint('userapp', __name__, url_prefix='/user')
+logger = logging.getLogger(__name__)
 
 
 def gen_token(user_id: str):
@@ -39,14 +40,14 @@ def register_user():
         db.session.add(new_user)
         db.session.commit()
     except ValidationError as valid_err:
-        logging.error(f'Validation Error: {valid_err.messages}')
+        logger.error(f'Validation Error: {valid_err.messages}')
         return jsonify({
             'status': 'warning',
             'message': valid_err.messages
         }), 400
     except Exception as err:
         db.session.rollback()
-        logging.error(f'An error occurred while creating user: {str(err)}')
+        logger.error(f'An error occurred while creating user: {str(err)}')
         return jsonify({
             'status': 'error',
             'message': 'Unexpected error occurred'
@@ -68,17 +69,17 @@ def login_user():
 
         cur_usr_db = User.query.filter_by(email=email).first()
     except ValidationError as valid_err:
-        logging.error(f'Validation Error: {valid_err.messages}')
+        logger.error(f'Validation Error: {valid_err.messages}')
         return jsonify(valid_err.messages), 400
     except Exception as err:
-        logging.error(f'An error occurred while logging user in: {str(err)}')
+        logger.error(f'An error occurred while logging user in: {str(err)}')
         return jsonify({
             'status': 'error',
             'message': 'Unexpected error'
         }), 500
     else:
         if cur_usr_db:
-            logging.info('User exists! Attempting to verify password')
+            logger.info('User exists! Attempting to verify password')
             if verify_pwd(cur_usr_db.password, password):
                 access_token, refresh_token = gen_token(str(cur_usr_db.id))
                 return jsonify({
@@ -90,13 +91,13 @@ def login_user():
                     }
                 }), 200
             else:
-                logging.info('Incorrect password')
+                logger.info('Incorrect password')
                 return jsonify({
                     'status': 'warning',
                     'message': f'Incorrect password for User-{cur_usr_db.name}'
                 }), 401
         else:
-            logging.info('User does not exist')
+            logger.info('User does not exist')
             return jsonify({
                 'status': 'warning',
                 'message': f'{email} does not exist'

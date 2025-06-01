@@ -12,6 +12,8 @@ main = Blueprint('main', __name__, url_prefix='/')
 post_schema = PostSchema()
 posts_schema = PostSchema(many=True)
 
+logger = logging.getLogger(__name__)
+
 # api
 
 @main.route('/api/get', methods=['GET'])
@@ -24,7 +26,7 @@ def get_post():
         try:
             post = Post.query.get(post_id)
         except Exception as err:
-            logging.error(f'Error querying post with id-{post_id}: {str(err)}')
+            logger.error(f'Error querying post with id-{post_id}: {str(err)}')
             return {
                 'status': 'error',
                 'message': f'Error fetching post with id: {post_id}'
@@ -46,7 +48,7 @@ def get_post():
         try:
             all_posts = Post.query.all()
         except Exception as err:
-            logging.error(f'Error querying post: {str(err)}')
+            logger.error(f'Error querying post: {str(err)}')
             return {
                 'status': 'error',
                 'message': 'Error fetching posts'
@@ -67,7 +69,7 @@ def get_post():
     try:
         user_id = get_jwt_identity()
         if not User.query.get(user_id):
-            logging.warning(f'Failed to fetch user-{user_id} using current token')
+            logger.warning(f'Failed to fetch user-{user_id} using current token')
             return jsonify({
                 'status': 'warning',
                 'message': 'User not found'
@@ -82,7 +84,7 @@ def get_post():
 
         return jsonify(response), code
     except Exception as err:
-        logging.error(f'Error while fetching post: {str(err)}')
+        logger.error(f'Error while fetching post: {str(err)}')
         return jsonify({
             'status': 'error',
             'message': 'Error occurred while fetching posts'
@@ -103,7 +105,7 @@ def create_post():
 
         user_id = get_jwt_identity()
         if not User.query.get(user_id):
-            logging.warning(f'Failed to fetch user-{user_id} using current token')
+            logger.warning(f'Failed to fetch user-{user_id} using current token')
             return jsonify({
                 'status': 'warning',
                 'message': 'User not found'
@@ -127,14 +129,14 @@ def create_post():
         }), 400
     except IntegrityError as integ_err:
         db.session.rollback()
-        logging.error(f'Integrity Error: {integ_err}')
+        logger.error(f'Integrity Error: {integ_err}')
         return jsonify({
             'status': 'error',
             'message': f'Post with title-{request.json.get("title")} may already exist'
         }), 400
     except Exception as err:
         db.session.rollback()
-        logging.error(f'An error occurred while creating post: {str(err)}')
+        logger.error(f'An error occurred while creating post: {str(err)}')
         return jsonify({
             'status': 'error',
             'message': 'An error occurred while creating post. Please try later.'
@@ -151,7 +153,7 @@ def delete_post(post_id: int):
     try:
         user_id = get_jwt_identity()
         if not User.query.get(user_id):
-            logging.warning(f'Failed to fetch user using current token')
+            logger.warning(f'Failed to fetch user using current token')
             return jsonify({
                 'status': 'warning',
                 'message': 'User not found'
@@ -165,7 +167,7 @@ def delete_post(post_id: int):
                 'message': f'No post found with id-{post_id}'
             }), 404
         if int(post.author_id) != int(user_id):
-            logging.warning(f'Unauthorized delete attempt by: {user_id}')
+            logger.warning(f'Unauthorized delete attempt by: {user_id}')
             return jsonify({
                 'status': 'warning',
                 'message': f'User not authorized to delete post-{post_id}'
@@ -176,7 +178,7 @@ def delete_post(post_id: int):
 
     except Exception as err:
         db.session.rollback()
-        logging.error(f'Error while deleting post with id-{post_id}: {str(err)}')
+        logger.error(f'Error while deleting post with id-{post_id}: {str(err)}')
         return jsonify({
             'status': 'error',
             'message': f'An error occurred while deleting post with id-{post_id}'
@@ -198,9 +200,9 @@ def update_post(post_id: int):
             }), 400
 
         user_id = get_jwt_identity()
-        logging.info(f'Extracted user_id from JWT: {user_id}')
+        logger.info(f'Extracted user_id from JWT: {user_id}')
         if not User.query.get(user_id):
-            logging.warning(f'Failed to fetch user using current token')
+            logger.warning(f'Failed to fetch user using current token')
             return jsonify({
                 'status': 'warning',
                 'message': 'User not found'
@@ -214,7 +216,7 @@ def update_post(post_id: int):
             }), 404
 
         if int(post.author_id) != int(user_id):
-            logging.warning(
+            logger.warning(
                 f'Unauthorized update attempt by user-{user_id} to update post-{post_id} owned by user-{post.author_id}')
             return jsonify({
                 'status': 'warning',
@@ -242,7 +244,7 @@ def update_post(post_id: int):
             'error': val_err.messages
         }), 400
     except IntegrityError as integ_err:
-        logging.error(f'Integrity error: {integ_err}')
+        logger.error(f'Integrity error: {integ_err}')
         db.session.rollback()
         return jsonify({
             'status': 'error',
@@ -250,13 +252,13 @@ def update_post(post_id: int):
         }), 400
     except Exception as db_err:
         db.session.rollback()
-        logging.error(f'Failed to update post-{post_id}: {str(db_err)}')
+        logger.error(f'Failed to update post-{post_id}: {str(db_err)}')
         return jsonify({
             'status': 'error',
             'message': 'Error updating Post'
         }), 500
     else:
-        logging.info(f'Updated fields for post-{post_id}: {list(validated_data.keys())}')
+        logger.info(f'Updated fields for post-{post_id}: {list(validated_data.keys())}')
         return jsonify({
             'status': 'success',
             'message': f'Post-{post_id} updated successfully'
